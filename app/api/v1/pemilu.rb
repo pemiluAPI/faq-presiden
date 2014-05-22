@@ -36,13 +36,13 @@ module Pemilu
               answer: question.answer,
               reference_law: question.reference_law,
               excerpt_law: question.excerpt_law,
-              tags: question.tags
+              tags: question.tags.map { |tag| tag.tag }
             }
           end
           {
           results: {
             count: questions.count,
-            total: Question.where(conditions).where(search).count,
+            total: Question.includes(:tags).where(conditions).where(search).count,
             questions: questions
           }
         }
@@ -65,11 +65,30 @@ module Pemilu
                 answer: question.answer,
                 reference_law: question.reference_law,
                 excerpt_law: question.excerpt_law,
-                tags: question.tags
+                tags: question.tags.map { |tag| tag.tag }
               }]
             }
           }
         end
+      end
+    end
+    
+    resource :tags do
+      desc 'return a list of Tags objects'
+      get do
+        tags = Array.new
+        Tag.group('tag').count.each do |field|
+          tags << {
+            tag: field[0],
+            question_count: field[1]
+          }
+        end
+        {
+          results: {
+            count: tags.count,            
+            tags: tags
+          }
+        }
       end
     end
   end
